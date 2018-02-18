@@ -3,27 +3,33 @@ import com.comsol.model.util.*;
 
 public class MembraneKevlar {
 
-    private static void createGeometry(GeomList geomList) {
-        GeomSequence geom = geomList.create("geom1", 3);
+    private static final String MESH_ID = "mesh";
+    private static final String GEOM_ID = "geometry";
+    private static final String MATERIAL_ID = "material";
 
+    private static void createGeometry(GeomList geomList) {
+        GeomSequence geom = geomList.create(GEOM_ID, 3);
         geom.label("Geometry");
-        geom.create("ps1", "ParametricSurface");
-        geom.feature("ps1").label("Membrane");
-        geom.feature("ps1").set("parmin1", -10);
-        geom.feature("ps1").set("parmax1", 10);
-        geom.feature("ps1").set("parmin2", -10);
-        geom.feature("ps1").set("parmax2", 10);
-        geom.feature("ps1").set("coord", new String[]{"s1", "s2", "0"});
-        geom.create("pc1", "ParametricCurve");
-        geom.feature("pc1").label("Impact");
-        geom.feature("pc1").set("parmax", "2*pi");
-        geom.feature("pc1").set("coord", new String[]{"sin(s)*0.2", "cos(s)*0.2", "0"});
+
+        GeomFeature membrane = geom.create("membrane", "ParametricSurface");
+        membrane.label("Membrane");
+        membrane.set("parmin1", -10);
+        membrane.set("parmax1", 10);
+        membrane.set("parmin2", -10);
+        membrane.set("parmax2", 10);
+        membrane.set("coord", new String[]{"s1", "s2", "0"});
+
+        GeomFeature impact = geom.create("impact", "ParametricCurve");
+        impact.label("Impact");
+        impact.set("parmax", "2*pi");
+        impact.set("coord", new String[]{"sin(s)*0.2", "cos(s)*0.2", "0"});
+
         geom.feature("fin").label("Full geometry");
         geom.run();
     }
 
     private static void createMesh(ComponentMeshList meshList) {
-        MeshSequence mesh = meshList.create("mesh1");
+        MeshSequence mesh = meshList.create(MESH_ID);
         mesh.label("Mesh");
 
         MeshFeature size = mesh.feature("size");
@@ -33,11 +39,74 @@ public class MembraneKevlar {
         size.set("hmin", 0.1);
 
         MeshFeature fq1 = mesh.create("fq1", "FreeQuad");
-        fq1.selection().geom("geom1");
+        fq1.selection().geom(GEOM_ID);
         fq1.label("Free Quad");
         fq1.set("method", "legacy52a");
 
         mesh.run();
+    }
+
+    private static void createMaterials(ComponentMaterialList materials) {
+        Material material = materials.create(MATERIAL_ID, "Common");
+
+        material.propertyGroup("def").func().create("Syt_solid_in_air_2", "Piecewise");
+        material.propertyGroup("def").func().create("alpha", "Piecewise");
+        material.propertyGroup("def").func().create("C", "Piecewise");
+        material.propertyGroup("def").func().create("rho", "Piecewise");
+        material.propertyGroup().create("ThermalExpansion", "Thermal expansion");
+        material.propertyGroup("ThermalExpansion").func().create("dL", "Piecewise");
+        material.propertyGroup("ThermalExpansion").func().create("CTE", "Piecewise");
+        material.propertyGroup().create("Enu", "Young's modulus and Poisson's ratio");
+        material.propertyGroup("Enu").func().create("E_solid_in_air_2", "Piecewise");
+
+        material.label("Kevlar 49 [solid,in air]");
+        material.propertyGroup("def").func("Syt_solid_in_air_2").set("arg", "T");
+        material.propertyGroup("def").func("Syt_solid_in_air_2")
+                .set("pieces", new String[][]{{"273.0", "473.0", "4.798114E9-4319428.0*T^1"}});
+        material.propertyGroup("def").func("alpha").set("arg", "T");
+        material.propertyGroup("def").func("alpha")
+                .set("pieces", new String[][]{{"293.0", "433.0", "-4.47259E-6-3.807924E-9*T^1"}});
+        material.propertyGroup("def").func("C").set("arg", "T");
+        material.propertyGroup("def").func("C")
+                .set("pieces", new String[][]{{"293.0", "453.0", "-2005.021+14.45144*T^1-0.009897633*T^2"}});
+        material.propertyGroup("def").func("rho").set("arg", "T");
+        material.propertyGroup("def").func("rho")
+                .set("pieces", new String[][]{{"293.0", "433.0", "1434.37+0.01429221*T^1+1.680031E-5*T^2"}});
+        material.propertyGroup("def").set("Syt", "Syt_solid_in_air_2(T[1/K])[Pa]");
+        material.propertyGroup("def")
+                .set("thermalexpansioncoefficient", new String[]{"(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))"});
+        material.propertyGroup("def").set("heatcapacity", "C(T[1/K])[J/(kg*K)]");
+        material.propertyGroup("def").set("density", "rho(T[1/K])[kg/m^3]");
+        material.propertyGroup("def").addInput("temperature");
+        material.propertyGroup("def").addInput("strainreferencetemperature");
+        material.propertyGroup("ThermalExpansion").func("dL").set("arg", "T");
+        material.propertyGroup("ThermalExpansion").func("dL")
+                .set("pieces", new String[][]{{"293.0", "433.0", "0.001310523-3.357184E-6*T^1-3.807471E-9*T^2"}});
+        material.propertyGroup("ThermalExpansion").func("CTE").set("arg", "T");
+        material.propertyGroup("ThermalExpansion").func("CTE")
+                .set("pieces", new String[][]{{"293.0", "433.0", "-3.357184E-6-7.614942E-9*T^1"}});
+        material.propertyGroup("ThermalExpansion").set("alphatan", "");
+        material.propertyGroup("ThermalExpansion").set("dL", "");
+        material.propertyGroup("ThermalExpansion").set("alphatanIso", "");
+        material.propertyGroup("ThermalExpansion").set("dLIso", "");
+        material.propertyGroup("ThermalExpansion")
+                .set("alphatan", new String[]{"CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]"});
+        material.propertyGroup("ThermalExpansion")
+                .set("dL", new String[]{"(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))"});
+        material.propertyGroup("ThermalExpansion").set("alphatanIso", "CTE(T)");
+        material.propertyGroup("ThermalExpansion")
+                .set("dLIso", "(dL(T)-dL(Tempref))/(1+dL(Tempref))");
+        material.propertyGroup("ThermalExpansion").addInput("temperature");
+        material.propertyGroup("ThermalExpansion")
+                .addInput("strainreferencetemperature");
+        material.propertyGroup("Enu").func("E_solid_in_air_2").set("arg", "T");
+        material.propertyGroup("Enu").func("E_solid_in_air_2")
+                .set("pieces", new String[][]{{"273.0", "473.0", "4.338668E11-2.146288E9*T^1+4844299.0*T^2-3712.089*T^3"}});
+        material.propertyGroup("Enu")
+                .set("youngsmodulus", "E_solid_in_air_2(T[1/K])[Pa]");
+        material.propertyGroup("Enu").set("poissonsratio", "0.3");
+        material.propertyGroup("Enu").addInput("temperature");
+
     }
 
     public static Model run() {
@@ -46,26 +115,16 @@ public class MembraneKevlar {
 
         createGeometry(component.geom());
         createMesh(component.mesh());
+        createMaterials(component.material());
 
         model.result().table().create("evl3", "Table");
-
-        component.material().create("mat1", "Common");
-        component.material("mat1").propertyGroup("def").func().create("Syt_solid_in_air_2", "Piecewise");
-        component.material("mat1").propertyGroup("def").func().create("alpha", "Piecewise");
-        component.material("mat1").propertyGroup("def").func().create("C", "Piecewise");
-        component.material("mat1").propertyGroup("def").func().create("rho", "Piecewise");
-        component.material("mat1").propertyGroup().create("ThermalExpansion", "Thermal expansion");
-        component.material("mat1").propertyGroup("ThermalExpansion").func().create("dL", "Piecewise");
-        component.material("mat1").propertyGroup("ThermalExpansion").func().create("CTE", "Piecewise");
-        component.material("mat1").propertyGroup().create("Enu", "Young's modulus and Poisson's ratio");
-        component.material("mat1").propertyGroup("Enu").func().create("E_solid_in_air_2", "Piecewise");
 
         component.coordSystem().create("shellsys", "VectorBase");
         component.coordSystem("shellsys").set("orthonormal", true);
 
-        component.physics().create("shell", "Shell", "geom1");
+        component.physics().create("shell", "Shell", GEOM_ID);
         component.physics("shell").create("vel1", "Velocity2", 2);
-        component.physics("shell").feature("vel1").selection().set(new int[]{2});
+        component.physics("shell").feature("vel1").selection().set(2);
 
         model.result().table("evl3").label("Evaluation 3D");
         model.result().table("evl3").comments("Interactive 3D values");
@@ -73,54 +132,6 @@ public class MembraneKevlar {
         model.capeopen().label("Thermodynamics Package");
 
         component.view("view1").label("View");
-
-        component.material("mat1").label("Kevlar 49 [solid,in air]");
-        component.material("mat1").propertyGroup("def").func("Syt_solid_in_air_2").set("arg", "T");
-        component.material("mat1").propertyGroup("def").func("Syt_solid_in_air_2")
-                .set("pieces", new String[][]{{"273.0", "473.0", "4.798114E9-4319428.0*T^1"}});
-        component.material("mat1").propertyGroup("def").func("alpha").set("arg", "T");
-        component.material("mat1").propertyGroup("def").func("alpha")
-                .set("pieces", new String[][]{{"293.0", "433.0", "-4.47259E-6-3.807924E-9*T^1"}});
-        component.material("mat1").propertyGroup("def").func("C").set("arg", "T");
-        component.material("mat1").propertyGroup("def").func("C")
-                .set("pieces", new String[][]{{"293.0", "453.0", "-2005.021+14.45144*T^1-0.009897633*T^2"}});
-        component.material("mat1").propertyGroup("def").func("rho").set("arg", "T");
-        component.material("mat1").propertyGroup("def").func("rho")
-                .set("pieces", new String[][]{{"293.0", "433.0", "1434.37+0.01429221*T^1+1.680031E-5*T^2"}});
-        component.material("mat1").propertyGroup("def").set("Syt", "Syt_solid_in_air_2(T[1/K])[Pa]");
-        component.material("mat1").propertyGroup("def")
-                .set("thermalexpansioncoefficient", new String[]{"(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))"});
-        component.material("mat1").propertyGroup("def").set("heatcapacity", "C(T[1/K])[J/(kg*K)]");
-        component.material("mat1").propertyGroup("def").set("density", "rho(T[1/K])[kg/m^3]");
-        component.material("mat1").propertyGroup("def").addInput("temperature");
-        component.material("mat1").propertyGroup("def").addInput("strainreferencetemperature");
-        component.material("mat1").propertyGroup("ThermalExpansion").func("dL").set("arg", "T");
-        component.material("mat1").propertyGroup("ThermalExpansion").func("dL")
-                .set("pieces", new String[][]{{"293.0", "433.0", "0.001310523-3.357184E-6*T^1-3.807471E-9*T^2"}});
-        component.material("mat1").propertyGroup("ThermalExpansion").func("CTE").set("arg", "T");
-        component.material("mat1").propertyGroup("ThermalExpansion").func("CTE")
-                .set("pieces", new String[][]{{"293.0", "433.0", "-3.357184E-6-7.614942E-9*T^1"}});
-        component.material("mat1").propertyGroup("ThermalExpansion").set("alphatan", "");
-        component.material("mat1").propertyGroup("ThermalExpansion").set("dL", "");
-        component.material("mat1").propertyGroup("ThermalExpansion").set("alphatanIso", "");
-        component.material("mat1").propertyGroup("ThermalExpansion").set("dLIso", "");
-        component.material("mat1").propertyGroup("ThermalExpansion")
-                .set("alphatan", new String[]{"CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]"});
-        component.material("mat1").propertyGroup("ThermalExpansion")
-                .set("dL", new String[]{"(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))"});
-        component.material("mat1").propertyGroup("ThermalExpansion").set("alphatanIso", "CTE(T)");
-        component.material("mat1").propertyGroup("ThermalExpansion")
-                .set("dLIso", "(dL(T)-dL(Tempref))/(1+dL(Tempref))");
-        component.material("mat1").propertyGroup("ThermalExpansion").addInput("temperature");
-        component.material("mat1").propertyGroup("ThermalExpansion")
-                .addInput("strainreferencetemperature");
-        component.material("mat1").propertyGroup("Enu").func("E_solid_in_air_2").set("arg", "T");
-        component.material("mat1").propertyGroup("Enu").func("E_solid_in_air_2")
-                .set("pieces", new String[][]{{"273.0", "473.0", "4.338668E11-2.146288E9*T^1+4844299.0*T^2-3712.089*T^3"}});
-        component.material("mat1").propertyGroup("Enu")
-                .set("youngsmodulus", "E_solid_in_air_2(T[1/K])[Pa]");
-        component.material("mat1").propertyGroup("Enu").set("poissonsratio", "0.3");
-        component.material("mat1").propertyGroup("Enu").addInput("temperature");
 
         component.coordSystem("sys1").label("Boundaries");
         component.coordSystem("shellsys").label("Local system");
