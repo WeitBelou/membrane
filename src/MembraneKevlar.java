@@ -48,65 +48,64 @@ public class MembraneKevlar {
 
     private static void createMaterials(ComponentMaterialList materials) {
         Material material = materials.create(MATERIAL_ID, "Common");
-
-        material.propertyGroup("def").func().create("Syt_solid_in_air_2", "Piecewise");
-        material.propertyGroup("def").func().create("alpha", "Piecewise");
-        material.propertyGroup("def").func().create("C", "Piecewise");
-        material.propertyGroup("def").func().create("rho", "Piecewise");
-        material.propertyGroup().create("ThermalExpansion", "Thermal expansion");
-        material.propertyGroup("ThermalExpansion").func().create("dL", "Piecewise");
-        material.propertyGroup("ThermalExpansion").func().create("CTE", "Piecewise");
-        material.propertyGroup().create("Enu", "Young's modulus and Poisson's ratio");
-        material.propertyGroup("Enu").func().create("E_solid_in_air_2", "Piecewise");
-
         material.label("Kevlar 49 [solid,in air]");
-        material.propertyGroup("def").func("Syt_solid_in_air_2").set("arg", "T");
-        material.propertyGroup("def").func("Syt_solid_in_air_2")
-                .set("pieces", new String[][]{{"273.0", "473.0", "4.798114E9-4319428.0*T^1"}});
-        material.propertyGroup("def").func("alpha").set("arg", "T");
-        material.propertyGroup("def").func("alpha")
-                .set("pieces", new String[][]{{"293.0", "433.0", "-4.47259E-6-3.807924E-9*T^1"}});
-        material.propertyGroup("def").func("C").set("arg", "T");
-        material.propertyGroup("def").func("C")
-                .set("pieces", new String[][]{{"293.0", "453.0", "-2005.021+14.45144*T^1-0.009897633*T^2"}});
-        material.propertyGroup("def").func("rho").set("arg", "T");
-        material.propertyGroup("def").func("rho")
-                .set("pieces", new String[][]{{"293.0", "433.0", "1434.37+0.01429221*T^1+1.680031E-5*T^2"}});
-        material.propertyGroup("def").set("Syt", "Syt_solid_in_air_2(T[1/K])[Pa]");
-        material.propertyGroup("def")
-                .set("thermalexpansioncoefficient", new String[]{"(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))"});
-        material.propertyGroup("def").set("heatcapacity", "C(T[1/K])[J/(kg*K)]");
-        material.propertyGroup("def").set("density", "rho(T[1/K])[kg/m^3]");
-        material.propertyGroup("def").addInput("temperature");
-        material.propertyGroup("def").addInput("strainreferencetemperature");
-        material.propertyGroup("ThermalExpansion").func("dL").set("arg", "T");
-        material.propertyGroup("ThermalExpansion").func("dL")
-                .set("pieces", new String[][]{{"293.0", "433.0", "0.001310523-3.357184E-6*T^1-3.807471E-9*T^2"}});
-        material.propertyGroup("ThermalExpansion").func("CTE").set("arg", "T");
-        material.propertyGroup("ThermalExpansion").func("CTE")
-                .set("pieces", new String[][]{{"293.0", "433.0", "-3.357184E-6-7.614942E-9*T^1"}});
-        material.propertyGroup("ThermalExpansion").set("alphatan", "");
-        material.propertyGroup("ThermalExpansion").set("dL", "");
-        material.propertyGroup("ThermalExpansion").set("alphatanIso", "");
-        material.propertyGroup("ThermalExpansion").set("dLIso", "");
-        material.propertyGroup("ThermalExpansion")
-                .set("alphatan", new String[]{"CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]"});
-        material.propertyGroup("ThermalExpansion")
-                .set("dL", new String[]{"(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))"});
-        material.propertyGroup("ThermalExpansion").set("alphatanIso", "CTE(T)");
-        material.propertyGroup("ThermalExpansion")
-                .set("dLIso", "(dL(T)-dL(Tempref))/(1+dL(Tempref))");
-        material.propertyGroup("ThermalExpansion").addInput("temperature");
-        material.propertyGroup("ThermalExpansion")
-                .addInput("strainreferencetemperature");
-        material.propertyGroup("Enu").func("E_solid_in_air_2").set("arg", "T");
-        material.propertyGroup("Enu").func("E_solid_in_air_2")
-                .set("pieces", new String[][]{{"273.0", "473.0", "4.338668E11-2.146288E9*T^1+4844299.0*T^2-3712.089*T^3"}});
-        material.propertyGroup("Enu")
-                .set("youngsmodulus", "E_solid_in_air_2(T[1/K])[Pa]");
-        material.propertyGroup("Enu").set("poissonsratio", "0.3");
-        material.propertyGroup("Enu").addInput("temperature");
 
+        MaterialModel def = material.propertyGroup("def");
+
+        def.func().create("Syt_solid_in_air_2", "Piecewise");
+        def.func("Syt_solid_in_air_2").set("arg", "T");
+        def.func("Syt_solid_in_air_2").set("pieces", new String[][]{{"273.0", "473.0", "4.798114E9-4319428.0*T^1"}});
+
+        def.func().create("alpha", "Piecewise");
+        def.func("alpha").set("arg", "T");
+        def.func("alpha").set("pieces", new String[][]{{"293.0", "433.0", "-4.47259E-6-3.807924E-9*T^1"}});
+
+        def.func().create("C", "Piecewise");
+        def.func("C").set("arg", "T");
+        def.func("C").set("pieces", new String[][]{{"293.0", "453.0", "-2005.021+14.45144*T^1-0.009897633*T^2"}});
+
+        def.func().create("rho", "Piecewise");
+        def.func("rho").set("arg", "T");
+        def.func("rho").set("pieces", new String[][]{{"293.0", "433.0", "1434.37+0.01429221*T^1+1.680031E-5*T^2"}});
+
+        def.set("Syt", "Syt_solid_in_air_2(T[1/K])[Pa]");
+        def.set("thermalexpansioncoefficient", new String[]{"(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))", "0", "0", "0", "(alpha(T[1/K])[1/K]+(Tempref-293[K])*if(abs(T-Tempref)>1e-3,(alpha(T[1/K])[1/K]-alpha(Tempref[1/K])[1/K])/(T-Tempref),d(alpha(T[1/K])[1/K],T)))/(1+alpha(Tempref[1/K])[1/K]*(Tempref-293[K]))"});
+        def.set("heatcapacity", "C(T[1/K])[J/(kg*K)]");
+        def.set("density", "rho(T[1/K])[kg/m^3]");
+
+        def.addInput("temperature");
+        def.addInput("strainreferencetemperature");
+
+
+        MaterialModel thermalExpansion = material.propertyGroup().create("ThermalExpansion", "Thermal expansion");
+
+        thermalExpansion.func().create("dL", "Piecewise");
+        thermalExpansion.func("dL").set("arg", "T");
+        thermalExpansion.func("dL").set("pieces", new String[][]{{"293.0", "433.0", "0.001310523-3.357184E-6*T^1-3.807471E-9*T^2"}});
+
+        thermalExpansion.func().create("CTE", "Piecewise");
+        thermalExpansion.func("CTE").set("arg", "T");
+        thermalExpansion.func("CTE").set("pieces", new String[][]{{"293.0", "433.0", "-3.357184E-6-7.614942E-9*T^1"}});
+
+        thermalExpansion.set("alphatan", new String[]{"CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]", "0", "0", "0", "CTE(T[1/K])[1/K]"});
+        thermalExpansion.set("alphatanIso", "CTE(T)");
+        thermalExpansion.set("dL", new String[]{"(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))", "0", "0", "0", "(dL(T[1/K])-dL(Tempref[1/K]))/(1+dL(Tempref[1/K]))"});
+        thermalExpansion.set("dLIso", "(dL(T)-dL(Tempref))/(1+dL(Tempref))");
+
+        thermalExpansion.addInput("temperature");
+        thermalExpansion.addInput("strainreferencetemperature");
+
+
+        MaterialModel enu = material.propertyGroup().create("Enu", "Young's modulus and Poisson's ratio");
+
+        enu.func().create("E_solid_in_air_2", "Piecewise");
+        enu.func("E_solid_in_air_2").set("arg", "T");
+        enu.func("E_solid_in_air_2").set("pieces", new String[][]{{"273.0", "473.0", "4.338668E11-2.146288E9*T^1+4844299.0*T^2-3712.089*T^3"}});
+
+        enu.set("youngsmodulus", "E_solid_in_air_2(T[1/K])[Pa]");
+        enu.set("poissonsratio", "0.3");
+
+        enu.addInput("temperature");
     }
 
     public static Model run() {
