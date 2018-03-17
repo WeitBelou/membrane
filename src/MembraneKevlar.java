@@ -7,6 +7,16 @@ public class MembraneKevlar {
     private static final String GEOM_ID = "geometry";
     private static final String MATERIAL_ID = "material";
 
+    private static void createCoordSystem(ComponentCoordsysList coordsysList) {
+        Coordsys shellSys = coordsysList.create("shellsys", "VectorBase");
+        shellSys.label("Local system");
+        shellSys.set("orthonormal", true);
+        shellSys.set("coord", new String[][]{{"x", "y", "z"}});
+        shellSys.set("base", new String[][]{{"root.comp1.shell.dsdX11", "root.comp1.shell.dsdX12", "root.comp1.shell.dsdX13"}, {"root.comp1.shell.dsdX21", "root.comp1.shell.dsdX22", "root.comp1.shell.dsdX23"}, {"root.comp1.shell.dsdX31", "root.comp1.shell.dsdX32", "root.comp1.shell.dsdX33"}});
+
+        coordsysList.get("sys1").label("Boundaries");
+    }
+
     private static void createGeometry(GeomList geomList) {
         GeomSequence geom = geomList.create(GEOM_ID, 3);
         geom.label("Geometry");
@@ -24,7 +34,9 @@ public class MembraneKevlar {
         impact.set("parmax", "2*pi");
         impact.set("coord", new String[]{"sin(s)*0.2", "cos(s)*0.2", "0"});
 
-        geom.feature("fin").label("Full geometry");
+        GeomFeature fin = geom.create("fin", "Finalize");
+        fin.label("Full geometry");
+
         geom.run();
     }
 
@@ -111,32 +123,26 @@ public class MembraneKevlar {
     public static Model run() {
         Model model = ModelUtil.create("Model");
         ModelNode component = model.component().create("comp1", false);
+        component.label("Main Component");
+
+        component.view("view1").label("View");
+
+        createCoordSystem(component.coordSystem());
 
         createGeometry(component.geom());
         createMesh(component.mesh());
         createMaterials(component.material());
 
-        model.result().table().create("evl3", "Table");
-
-        component.coordSystem().create("shellsys", "VectorBase");
-        component.coordSystem("shellsys").set("orthonormal", true);
 
         component.physics().create("shell", "Shell", GEOM_ID);
         component.physics("shell").create("vel1", "Velocity2", 2);
         component.physics("shell").feature("vel1").selection().set(2);
 
+        model.result().table().create("evl3", "Table");
         model.result().table("evl3").label("Evaluation 3D");
         model.result().table("evl3").comments("Interactive 3D values");
 
         model.capeopen().label("Thermodynamics Package");
-
-        component.view("view1").label("View");
-
-        component.coordSystem("sys1").label("Boundaries");
-        component.coordSystem("shellsys").label("Local system");
-        component.coordSystem("shellsys").set("coord", new String[][]{{"x", "y", "z"}});
-        component.coordSystem("shellsys")
-                .set("base", new String[][]{{"root.comp1.shell.dsdX11", "root.comp1.shell.dsdX12", "root.comp1.shell.dsdX13"}, {"root.comp1.shell.dsdX21", "root.comp1.shell.dsdX22", "root.comp1.shell.dsdX23"}, {"root.comp1.shell.dsdX31", "root.comp1.shell.dsdX32", "root.comp1.shell.dsdX33"}});
 
         component.physics("shell").feature("emm1").label("Linear elastic material");
         component.physics("shell").feature("free1").label("Free boundaries");
@@ -278,8 +284,6 @@ public class MembraneKevlar {
         model.result("pg2").feature("arws2").feature("def").set("scaleactive", true);
         model.result("pg3").label("Over line");
 
-        component.label("Main Component");
-        model.label("membrane_kevlar.mph");
 
         return model;
     }
